@@ -4,7 +4,7 @@ let
                    url = "https://github.com/ckoparkar/nixpkgs-mozilla";
                    # Commit hash for nixos as of 2023-07-05
                    ref = "refs/heads/master";
-                   rev = "26402a0a438220e418c31a2c93c15f319d19527a";
+                   rev = "9b05600b23ec227b663a5059e22a744ef6751ced";
                  });
   pkgs = import (builtins.fetchGit {
                    url = "https://github.com/nixos/nixpkgs/";
