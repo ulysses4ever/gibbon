@@ -33,5 +33,6 @@ in
                   ];
     shellHook = ''
       export GIBBONDIR=${gibbon_dir}
+      export HC=${ghc}/bin/ghc
     '';
   }
