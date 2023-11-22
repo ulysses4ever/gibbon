@@ -130,7 +130,8 @@ t1Prog = Prog {ddefs = M.fromList [],
                                                 funRec = NotRec,
                                                 funCanTriggerGC = False,
                                                 funOptLayout    = NoLayoutOpt,
-                                                userConstraintsDataCon = Nothing  
+                                                userConstraintsDataCon = Nothing, 
+						dataConFieldTypeInfo = Nothing  
                                               }
                            }),
                    ("add2",
@@ -144,7 +145,8 @@ t1Prog = Prog {ddefs = M.fromList [],
                                                 funRec = NotRec,
                                                 funCanTriggerGC = False,
                                                 funOptLayout    = NoLayoutOpt,
-                                                userConstraintsDataCon = Nothing
+                                                userConstraintsDataCon = Nothing,
+						dataConFieldTypeInfo=Nothing
                                               }
                            })],
         mainExp = Just
