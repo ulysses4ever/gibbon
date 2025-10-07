@@ -664,10 +664,18 @@ routeEnds prg@Prog{ddefs,fundefs,mainExp} = do
                  return $ IfE e1 e2' e3'
 
           MkProdE ls -> do
-            let tys = L.map (gRecoverTypeLoc ddefs env2) ls
+            -- Flatten nested tuples: if any element is a VarE with ProdTy, project its components
+            let flattenElem :: Exp2 -> [Exp2]
+                flattenElem expr = case expr of
+                  VarE v -> case gRecoverTypeLoc ddefs env2 expr of
+                    ProdTy elemTys -> [ProjE i expr | i <- [0.. length elemTys - 1]]
+                    _ -> [expr]
+                  _ -> [expr]
+                flattened = concatMap flattenElem ls
+                tys = L.map (gRecoverTypeLoc ddefs env2) flattened
                 prodty = ProdTy tys
             v <- gensym "flt_RE"
-            let ex = L1.mkLets [(v,[],prodty,(MkProdE ls))] (VarE v)
+            let ex = L1.mkLets [(v,[],prodty,(MkProdE flattened))] (VarE v)
             exp inst_waiting_on_loc fns retlocs eor lenv afterenv (extendVEnvLocVar (fromVarToFreeVarsTy v) prodty env2) ex
 
           ProjE{} -> do
