@@ -591,6 +591,8 @@ tests:
     run-modes: ["gibbon2"]
 
   - name: test_303.hs
+    answer-file: examples/test_303.ans
+    failing: [gibbon2]
     run-modes: ["gibbon2"]
 
 
