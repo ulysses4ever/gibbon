@@ -951,6 +951,10 @@ cursorizePackedExp freeVarToVarEnv lenv ddfs fundefs denv tenv senv ex =
               case ty of
                   _ | isPackedTy (unTy2 ty) -> fromDi <$> cursorizePackedExp freeVarToVarEnv lenv ddfs fundefs denv tenv senv e
                   _ -> cursorizeExp  freeVarToVarEnv lenv ddfs fundefs denv tenv senv e
+      -- Flatten nested MkProdE from dilated packed values
+      -- When a packed value is cursorized, it becomes MkProdE [start, end]
+      -- If we have MkProdE [x, MkProdE [y, z]], we need to keep it nested
+      -- to preserve the correct type structure: ProdTy [ty_x, ProdTy [ty_y, ty_z]]
       let rhs' = MkProdE es
       return $ Di rhs'
 
@@ -1970,7 +1974,8 @@ cursorizeProd freeVarToVarEnv lenv isPackedContext ddfs fundefs denv tenv senv e
                   _ | hasPacked ty  -> fromDi <$> cursorizePackedExp freeVarToVarEnv lenv ddfs fundefs denv tenv senv e
                   _ -> cursorizeExp freeVarToVarEnv lenv ddfs fundefs denv tenv senv e
       let rhs' = MkProdE es
-          ty   = gRecoverType ddfs (Env2 tenv M.empty) rhs
+          -- Use rhs' (cursorized) instead of rhs (original) to get correct nested type
+          ty   = gRecoverType ddfs (Env2 tenv M.empty) rhs'
           ty'  = cursorizeTy (unTy2 ty)
           tenv' = M.insert v ty tenv
       bod' <- go tenv' bod
