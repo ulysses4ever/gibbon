@@ -951,11 +951,14 @@ cursorizePackedExp freeVarToVarEnv lenv ddfs fundefs denv tenv senv ex =
               case ty of
                   _ | isPackedTy (unTy2 ty) -> fromDi <$> cursorizePackedExp freeVarToVarEnv lenv ddfs fundefs denv tenv senv e
                   _ -> cursorizeExp  freeVarToVarEnv lenv ddfs fundefs denv tenv senv e
-      -- Flatten nested MkProdE from dilated packed values
+      -- Flatten nested MkProdE from dilated packed values to avoid type mismatches
       -- When a packed value is cursorized, it becomes MkProdE [start, end]
-      -- If we have MkProdE [x, MkProdE [y, z]], we need to keep it nested
-      -- to preserve the correct type structure: ProdTy [ty_x, ProdTy [ty_y, ty_z]]
-      let rhs' = MkProdE es
+      -- We need to flatten: MkProdE [x, MkProdE [y, z]] -> MkProdE [x, y, z]
+      let flattenMkProdE e = case e of
+                               MkProdE inner -> concatMap flattenMkProdE inner
+                               other -> [other]
+      let flattened_es = concatMap flattenMkProdE es
+      let rhs' = MkProdE flattened_es
       return $ Di rhs'
 
     -- Not sure if we need to replicate all the checks from Cursorize1
