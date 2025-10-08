@@ -1974,9 +1974,11 @@ cursorizeProd freeVarToVarEnv lenv isPackedContext ddfs fundefs denv tenv senv e
                   _ | hasPacked ty  -> fromDi <$> cursorizePackedExp freeVarToVarEnv lenv ddfs fundefs denv tenv senv e
                   _ -> cursorizeExp freeVarToVarEnv lenv ddfs fundefs denv tenv senv e
       let rhs' = MkProdE es
-          -- Use rhs' (cursorized) instead of rhs (original) to get correct nested type
-          ty   = gRecoverType ddfs (Env2 tenv M.empty) rhs'
-          ty'  = cursorizeTy (unTy2 ty)
+          -- Compute cursorized type for the product by cursorizing each element type
+          -- This ensures nested tuples from dilation are reflected in the type
+          cursorized_elem_tys = L.map cursorizeTy tys
+          ty'  = ProdTy cursorized_elem_tys
+          ty   = gRecoverType ddfs (Env2 tenv M.empty) rhs
           tenv' = M.insert v ty tenv
       bod' <- go tenv' bod
       return $ mkLets [(v,[], ty', rhs')] bod'
