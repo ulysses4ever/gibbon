@@ -951,7 +951,14 @@ cursorizePackedExp freeVarToVarEnv lenv ddfs fundefs denv tenv senv ex =
               case ty of
                   _ | isPackedTy (unTy2 ty) -> fromDi <$> cursorizePackedExp freeVarToVarEnv lenv ddfs fundefs denv tenv senv e
                   _ -> cursorizeExp  freeVarToVarEnv lenv ddfs fundefs denv tenv senv e
-      let rhs' = MkProdE es
+      -- Flatten nested MkProdE from dilated packed values to avoid type mismatches
+      -- When a packed value is cursorized, it becomes MkProdE [start, end]
+      -- We need to flatten: MkProdE [x, MkProdE [y, z]] -> MkProdE [x, y, z]
+      let flattenMkProdE e = case e of
+                               MkProdE inner -> concatMap flattenMkProdE inner
+                               other -> [other]
+      let flattened_es = concatMap flattenMkProdE es
+      let rhs' = MkProdE flattened_es
       return $ Di rhs'
 
     -- Not sure if we need to replicate all the checks from Cursorize1
@@ -1970,8 +1977,11 @@ cursorizeProd freeVarToVarEnv lenv isPackedContext ddfs fundefs denv tenv senv e
                   _ | hasPacked ty  -> fromDi <$> cursorizePackedExp freeVarToVarEnv lenv ddfs fundefs denv tenv senv e
                   _ -> cursorizeExp freeVarToVarEnv lenv ddfs fundefs denv tenv senv e
       let rhs' = MkProdE es
+          -- Compute cursorized type for the product by cursorizing each element type
+          -- This ensures nested tuples from dilation are reflected in the type
+          cursorized_elem_tys = L.map cursorizeTy tys
+          ty'  = ProdTy cursorized_elem_tys
           ty   = gRecoverType ddfs (Env2 tenv M.empty) rhs
-          ty'  = cursorizeTy (unTy2 ty)
           tenv' = M.insert v ty tenv
       bod' <- go tenv' bod
       return $ mkLets [(v,[], ty', rhs')] bod'

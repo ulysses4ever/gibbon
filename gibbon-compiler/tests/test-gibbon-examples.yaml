@@ -591,6 +591,7 @@ tests:
     run-modes: ["gibbon2"]
 
   - name: test_303.hs
-    failing: [gibbon1, gibbon2, gibbon3, pointer, interp1, colobus]
+    answer-file: examples/test_303.ans
+    run-modes: ["gibbon2"]
 
 
